@@ -19,7 +19,7 @@ struct Info {
 
 macro_rules! parse_extra_fields {
     ($extra:expr, $(($v:expr,$n:expr)),*) => {
-        $({
+        $(
         $v = match $extra.get($n) {
             // TODO: find a way to replace BencodeElem::String with
             // a macro argument, so that the macro can also be used
@@ -27,7 +27,7 @@ macro_rules! parse_extra_fields {
             Some(BencodeElem::String(h)) => Some(h).cloned(),
             _ => None,
         };
-        })*
+        )*
     };
 }
 
@@ -105,7 +105,9 @@ fn test_parse_torrent() {
         created_by: Some("mktorrent 1.1".to_string()),
         encoding: None,
         comment: Some("t2meili test file".to_string()),
-        magnet: Some("magnet:?xt=urn:btih:565a5171f7662dff2a2082eca14458d8a7f09b0a&dn=mow".to_string()),
+        magnet: Some(
+            "magnet:?xt=urn:btih:565a5171f7662dff2a2082eca14458d8a7f09b0a&dn=mow".to_string(),
+        ),
     };
 
     assert_eq!(output.unwrap(), testvalue);
