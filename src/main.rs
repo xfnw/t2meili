@@ -17,6 +17,20 @@ struct Info {
     magnet: Option<String>,
 }
 
+macro_rules! parse_extra_fields {
+    ($extra:expr, $(($v:expr,$n:expr)),*) => {
+        $({
+        $v = match $extra.get($n) {
+            // TODO: find a way to replace BencodeElem::String with
+            // a macro argument, so that the macro can also be used
+            // for created_by, since it is an integer
+            Some(BencodeElem::String(h)) => Some(h).cloned(),
+            _ => None,
+        };
+        })*
+    };
+}
+
 fn parse_torrent(filename: &str) -> Result<Info, Box<dyn Error>> {
     let torrent = Torrent::read_from_file(filename)?;
 
@@ -25,22 +39,18 @@ fn parse_torrent(filename: &str) -> Result<Info, Box<dyn Error>> {
     let mut encoding = None;
     let mut comment = None;
 
-    // extra Some({"creation date": Integer(1618518382), "created by": String("Transmission/3.00 (bb6b5a062e)"), "comment": String("cans custom arch image"), "encoding": String("UTF-8")})
     if let Some(ref extra) = torrent.extra_fields {
         creation_date = match extra.get("creation date") {
-            Some(h) => match h {
-                BencodeElem::Integer(h) => Some(h).cloned(),
-                _ => None,
-            },
-            None => None,
+            Some(BencodeElem::Integer(h)) => Some(h).copied(),
+            _ => None,
         };
-        created_by = match extra.get("created by") {
-            Some(h) => match h {
-                BencodeElem::String(h) => Some(h).cloned(),
-                _ => None,
-            },
-            None => None,
-        };
+
+        parse_extra_fields!(
+            extra,
+            (created_by, "created by"),
+            (encoding, "encoding"),
+            (comment, "comment")
+        );
     };
 
     let out = Info {
@@ -50,10 +60,10 @@ fn parse_torrent(filename: &str) -> Result<Info, Box<dyn Error>> {
         piece_length: torrent.piece_length,
         private: if torrent.is_private() { 1 } else { 0 },
         magnet: torrent.magnet_link().ok(),
-        creation_date: creation_date,
-        created_by: created_by,
-        encoding: encoding,
-        comment: comment,
+        creation_date,
+        created_by,
+        encoding,
+        comment,
     };
 
     Ok(out)
