@@ -3,7 +3,7 @@ use std::{env::args, error::Error};
 
 use lava_torrent::{bencode::BencodeElem, torrent::v1::Torrent};
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, PartialEq, Debug)]
 struct Info {
     hash: String,
     name: String,
@@ -84,4 +84,29 @@ fn main() {
             }
         }
     }
+}
+
+#[test]
+fn test_parse_torrent() {
+    // relative filename is fine, cargo test sets
+    // a consistent working directory
+    let output = parse_torrent("test.torrent");
+
+    // values from transmission-show
+    // except for length, which was calculated manually
+    // since transmission-show is not precise enough
+    let testvalue = Info {
+        hash: "565a5171f7662dff2a2082eca14458d8a7f09b0a".to_string(),
+        name: "mow".to_string(),
+        length: 621,
+        piece_length: 262144, // 256.0 KiB == 262144 bytes
+        private: 0,
+        creation_date: Some(1691787422),
+        created_by: Some("mktorrent 1.1".to_string()),
+        encoding: None,
+        comment: Some("t2meili test file".to_string()),
+        magnet: Some("magnet:?xt=urn:btih:565a5171f7662dff2a2082eca14458d8a7f09b0a&dn=mow".to_string()),
+    };
+
+    assert_eq!(output.unwrap(), testvalue);
 }
