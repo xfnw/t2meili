@@ -1,5 +1,8 @@
 [package]
 name = "t2meili"
+description = "convert torrent metadata to json lines"
+repository = "https://github.com/xfnw/t2meili/"
+license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
