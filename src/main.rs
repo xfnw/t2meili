@@ -1,6 +1,5 @@
 use serde::Serialize;
-use std::io;
-use std::io::Read;
+use std::{env::args, error::Error};
 
 use lava_torrent::torrent::v1::Torrent;
 
@@ -17,22 +16,37 @@ struct Info {
     magnet: Option<String>,
 }
 
+fn parse_torrent(filename: &str) -> Result<Info, Box<dyn Error>> {
+    let torrent = Torrent::read_from_file(filename)?;
 
-fn main() {
-
-    let torrent = Torrent::read_from_file("sample.torrent").unwrap();
-
-    let output = Info {
+    let out = Info {
         hash: torrent.info_hash(),
         name: torrent.name.to_owned(),
         length: torrent.length,
         piece_length: torrent.piece_length,
-        private: if torrent.is_private() {1} else {0},
+        private: if torrent.is_private() { 1 } else { 0 },
         creation_date: None,
         comment: None,
         created_by: None,
         magnet: torrent.magnet_link().ok(),
     };
 
-    println!("{}", serde_json::to_string(&output).unwrap());
+    Ok(out)
+}
+
+fn main() {
+    for arg in args().skip(1) {
+        match parse_torrent(&arg) {
+            Ok(output) => {
+                println!(
+                    "{}",
+                    serde_json::to_string(&output).expect("could not serialize")
+                );
+            }
+            Err(e) => {
+                eprintln!("warning: skipping {}: {}", &arg, e);
+                continue;
+            }
+        }
+    }
 }
