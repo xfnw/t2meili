@@ -93,8 +93,6 @@ fn test_parse_torrent() {
     let output = parse_torrent("test.torrent");
 
     // values from transmission-show
-    // except for length, which was calculated manually
-    // since transmission-show is not precise enough
     let testvalue = Info {
         hash: "565a5171f7662dff2a2082eca14458d8a7f09b0a".to_string(),
         name: "mow".to_string(),
